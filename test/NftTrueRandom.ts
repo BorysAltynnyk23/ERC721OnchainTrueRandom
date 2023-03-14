@@ -11,7 +11,7 @@ import type { NftTrueRandom } from "../typechain-types";
 import { utils } from "../typechain-types/@openzeppelin/contracts";
 
 
-
+const MILLION = 1000000
 
 const URI_LIST = [
     "disk",
@@ -50,28 +50,25 @@ describe("NftTrueRandom", function () {
     });
 
     afterEach(async () => await snapshotA.restore());
-    describe("", function() {
-        it.skip("gas used on constructor 1000 URI", async() =>{
-            let URI_LIST_1000 = Array.apply(null, Array(1100)).map(function (x, i) { return i.toString(); })
-            
-            const NftTrueRandom = await ethers.getContractFactory("NftTrueRandom", deployer);
-            let tx = await NftTrueRandom.deploy(URI_LIST_1000);
 
-            const txReceipt = await ethers.provider.getTransactionReceipt(tx.deployTransaction.hash);
+    describe.only("gas analysis", function() {
+        it("initialize 1k not used nft ids", async() =>{
+            const TOTAL_NFT_AMOUNT = 1000
+            let tx  = await nftTruerandom.initializeNotUsedNftId(TOTAL_NFT_AMOUNT);
+            const receipt = await tx.wait()
+            console.log("gasUsed in million", receipt.gasUsed / MILLION )
+        })
+        it("set 1k URIs gas estimation", async() =>{
+            let URI_LIST_5000= Array.apply(null, Array(1000)).map(function (x, i) { return i.toString(); })
 
-            console.log("gasUSED", txReceipt.gasUsed)
-            // const receipt = await tx.wait();
-            // const gasUsed = receipt.getTransactionReceipt().gasUsed;
-            // console.log("gasUsed 1000 URI", gasUsed)
+            let tx  = await nftTruerandom.setURIs(URI_LIST_5000);
+            const receipt = await tx.wait()
+            console.log("gasUsed in million", receipt.gasUsed / MILLION)
+
         })
     })
     describe("", function () {
-        it.only("test", async() =>{
-            let tx  = await nftTruerandom.initializeNotUsedNftId();
-            const receipt = await tx.wait()
-            console.log("gasUsed", receipt.gasUsed)
-            console.log(await nftTruerandom.getEl(2) )
-        })
+
         it("flow", async() =>{
             let nftPrice = await nftTruerandom.ethNftPrice()
 

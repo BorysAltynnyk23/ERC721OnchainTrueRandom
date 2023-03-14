@@ -29,8 +29,9 @@ contract NftTrueRandom is ERC721, Ownable {
     IERC20 public paymentToken;
     uint256 public erc20NftPrice;
 
-    uint16 [10000] public notUsedNftIds; // 65535 - max value
+    uint16 [1000] public notUsedNftIds; // 65535 - max value
     uint256 MAX_NFT_NUMBER;
+    string [] public URIs;
     
     // which block determine user random number
     // 1 user in block
@@ -74,7 +75,8 @@ contract NftTrueRandom is ERC721, Ownable {
         uint256 curNftId = numerOfMintedNft.current();
         
         console.logBytes32(blockhash(userBlockNumber));
-        nftIdToRandom[curNftId] = blockhash(userBlockNumber);
+        // nftIdToRandom[curNftId] = blockhash(userBlockNumber);
+        
 
         //delete minted blockId from user blockIds
         if(_userArrayIndex == (blockIds.length - 1)) {
@@ -84,13 +86,13 @@ contract NftTrueRandom is ERC721, Ownable {
             blockIds[_userArrayIndex] = lastElement;
             blockIds.pop();
         }
-
-        uint256 newNftId = uint256(nftIdToRandom[curNftId]) % MAX_NFT_NUMBER;
-        if(!isNftIdMinted[newNftId]){
-            isNftIdMinted[newNftId] = true;
-        }else{
-            // while()
-        }
+        //convert NFT blockhash to random nft id
+        uint256 idFromNotUsedNft = (uint256(blockhash(userBlockNumber)) % notUsedNftIds.length);
+        uint16 newNftId = notUsedNftIds[idFromNotUsedNft];
+        
+        //remove used nft id
+        notUsedNftIds[idFromNotUsedNft] = notUsedNftIds[notUsedNftIds.length - 1];
+        notUsedNftIds.pop();
         //mint
         _mint(_mintee, newNftId);
 
@@ -104,6 +106,7 @@ contract NftTrueRandom is ERC721, Ownable {
             erc20Paid = paymentToken.transferFrom(msg.sender, address(this), erc20NftPrice );
         }
         require(erc20Paid == true || msg.value == ethNftPrice, "Payment is not received");
+        
         //check that one apply per block
         require(lastApplyBlockNumber != block.number, "Cannot apply for mint in this block, try one more time");
         
@@ -122,13 +125,15 @@ contract NftTrueRandom is ERC721, Ownable {
         erc20NftPrice = _price;
         paymentToken = IERC20(_token);
     }
-    function getEl(uint256 _index) public view returns(uint256) {
-        return notUsedNftIds[_index];
-    }
-    function initializeNotUsedNftId() public onlyOwner{
-        for(uint16 i =0; i< notUsedNftIds.length; i++){
+
+    function initializeNotUsedNftId(uint256 _totalNftNumber) public onlyOwner{
+        for(uint16 i = 0; i< _totalNftNumber; i++){
             notUsedNftIds[i] = i;
         }
+    }
+    // test function
+    function setURIs( string[] memory _URIs) public onlyOwner{
+        URIs = _URIs;
     }
 
 
